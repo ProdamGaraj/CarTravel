@@ -319,6 +319,7 @@ namespace CarTravel
 
         private void button1_Click(object sender, EventArgs e)
         {
+            //ВСЁ В ЕВРО!
             double releaseYear = Convert.ToDouble(textBox1.Text);
             double engineCapacity = Convert.ToDouble(textBox2.Text);
             double carCost = Convert.ToDouble(textBox3.Text) ;
