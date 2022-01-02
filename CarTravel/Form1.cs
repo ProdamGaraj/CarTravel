@@ -1,32 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CarTravel
 {
     public partial class CarTravel : Form
     {
-        double euro=90;
-        double dollar=75;
+        DateTime releaseDate;
+        string auctionName = "copart";
+        double fixPrice = 0;
+        double carCost = 0;
+        double euro = 90;
+        double dollar = 75;
         double deliver = 0;
         double recyclingFee = 400;
         double pfl = 500;//pensioner
-        double sbktsRF = 871;//??????????????????????????????????????????????
+        double sbktsRF = 871;//глонас
         double roma = 1400;
         double registrationCost = 50;
+        double engineCapacity = 0;
+        double priceCorrection=0;
 
         public class Car
         {
-            public int Age { get; set; }
+            public double Age { get; set; }
             public double EngineCapacity { get; set; }
             public double CarCost { get; set; }
-            public Car(int age, double engineCapacity, double carCost)
+            public Car(double age, double engineCapacity, double carCost)
             {
                 Age = age;
                 EngineCapacity = engineCapacity;
@@ -204,11 +204,11 @@ namespace CarTravel
                 {
                     registrationCost = 8550 / euro;//8550
                 }
-                else if (car.CarCost > 5000)
+                else if (car.CarCost >= 5000)
                 {
                     registrationCost = 3100 / euro;//3100
                 }
-                else if (car.CarCost > 2222)
+                else if (car.CarCost >= 2222)
                 {
                     registrationCost = 1550 / euro;//1550
                 }
@@ -314,14 +314,15 @@ namespace CarTravel
 
             customDuties *= euro;
             registrationCost *= euro;
+
             return registrationCost.ToString() + "|" + recyclingFee.ToString() + "`" + customDuties.ToString() + "!" + (registrationCost + recyclingFee + customDuties).ToString();
         }
-        public String AuctionerPayment(Car car)
+        public String AuctionerPayment(Car car, string auctionName)
         {
             double cost = car.CarCost;
-            double auc, auc1, auc2;
+            double auc = 0, auc1 = 0, auc2 = 0;
 
-            if (Copart.Checked)
+            if (auctionName.ToLower().Equals("copart"))
             {
                 if (cost < 100)
                 {
@@ -486,7 +487,7 @@ namespace CarTravel
                     auc2 = 129;
                 }
             }
-            else// If Iaai.Checked
+            else if (auctionName.ToLower().Equals("iaai"))// If Iaai.Checked
             {
                 if (cost < 100)
                 {
@@ -655,15 +656,55 @@ namespace CarTravel
                     auc2 = 119;
                 }
             }
+
             //ТОЧНАЯ ЦЕНА АВТО ДЛЯ ТАМОЖНИ
 
             auc = auc1 + auc2 + 109; //Комиссия аукциона
 
 
-            return auc.ToString();
+            return Math.Round(auc, 2).ToString();
         }
 
-        public CarTravel()
+        public String AddPointerSpace(string inpt)
+        {
+            string reversedResult = "";
+            int dotId = inpt.IndexOf(",");
+            if (dotId == -1) { dotId = inpt.IndexOf("."); }
+            if (dotId == -1)
+            {
+                inpt = new string(inpt.ToCharArray().Reverse().ToArray());
+                for (int i = inpt.Length - 1; i >= 0; i--)
+                {
+                    reversedResult += inpt[i];
+                    if (i % 3 == 0)
+                    {
+                        reversedResult += " ";
+                    }
+                }
+                return reversedResult;
+            }
+            else
+            {
+                string tail = "";
+                for (int i = inpt.Length - 1; i >= dotId; i--)
+                {
+                    tail += inpt[i];
+                }
+                inpt = inpt.Substring(0, dotId);
+                inpt = new string(inpt.ToCharArray().Reverse().ToArray());
+                for (int i = inpt.Length - 1; i >= 0; i--)
+                {
+                    reversedResult += inpt[i];
+                    if (i % 3 == 0 && i != 0)
+                    {
+                        reversedResult += " ";
+                    }
+                }
+                reversedResult += new string(tail.ToCharArray().Reverse().ToArray());
+                return reversedResult;
+            }
+        }
+            public CarTravel()
         {
             InitializeComponent();
         }
@@ -672,55 +713,167 @@ namespace CarTravel
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //ВСЁ В ЕВРО!
-            double releaseYear = Convert.ToDouble(textBox1.Text);
-            double engineCapacity = Convert.ToDouble(textBox3.Text);
-            double carCost = Convert.ToDouble(textBox2.Text);
-            int age = Convert.ToInt32(DateTime.Now.Year - releaseYear);
-            Car car = new Car(age, engineCapacity, carCost * dollar / euro);
 
-            string auctioneerPayment = AuctionerPayment(car);
+            bool flag = false;
+
+            if (FixPrice.Text=="" || textBox4.Text == "" || CarPriceDollar.Text == "" || textBox3.Text == "" || textBox5.Text == "")
+            {
+                MessageBox.Show("Данные то введи.");
+            }
+            try
+                {
+                    euro = Convert.ToDouble(textBox4.Text);
+                }
+                catch (Exception)
+                {
+                    euro = 90;
+                    textBox4.Text = "90";
+                    flag = true;
+                }
+            try
+                {
+                    dollar = Convert.ToDouble(textBox5.Text);
+                }
+                catch (Exception)
+                {
+                    dollar = 75;
+                    textBox5.Text = "75";
+                    flag = true;
+                }
+            try
+                {
+                    engineCapacity = Convert.ToDouble(textBox3.Text);
+                }
+                catch (Exception)
+                {
+                    if (textBox3.Text.ToUpper() == "V8" || textBox3.Text.ToUpper() == "ВЭ УОСЕМЬ")
+                    {
+                        engineCapacity = 5000;
+                        textBox3.Text = "5000";
+                        MessageBox.Show("Чо бы я тут ни насчитал для тебя - бесплатно!");
+                    }
+                    else
+                    {
+                        engineCapacity = 0;
+                        textBox3.Text = "0";
+                        flag = true;
+                    }
+                }
+            try
+                {
+                    carCost = Convert.ToDouble(CarPriceDollar.Text);
+                }
+                catch (Exception)
+                {
+                    carCost = 0;
+                    CarPriceDollar.Text = "0";
+                    flag = true;
+                }
+            try
+            {
+                fixPrice = Convert.ToDouble( FixPrice.Text);
+            }
+            catch (Exception)
+            {
+                fixPrice = 0;
+                FixPrice.Text = "0";
+                flag = true;
+            }
+            try
+            {
+                priceCorrection=Convert.ToDouble(PriceCorrection.Text);
+            }
+            catch (Exception)
+            {
+                priceCorrection = 0;
+                PriceCorrection.Text = "0";
+                flag = true;
+            }
+            if (flag)
+            {
+                    MessageBox.Show("Выведи и введи нормально.");
+            }
+
+            // memes
+            if (carCost > 100000)
+            {
+                MessageBox.Show("Не нужна тебе такая машина, брат....\nПоверь мне на слово. Да и стоила бы вот столько....");
+            }
+            if (carCost > 10000000)
+            {
+                MessageBox.Show("Братан, у тебя клава залипла.");
+            }
+            // end memes
+
+            double age = (DateTime.Now.Date - releaseDate.Date).Days / 365;
+            Car car = new Car(age, engineCapacity, (carCost+deliver) * dollar / euro);
+
+            string auctioneerPayment = AuctionerPayment(car, auctionName);
             string customsPayment = CustomsPayment(car, euro, dollar);
             string customsPaymentSave = customsPayment;
 
-            carCostRub.Text = carCost * dollar+ " rub";
-            carCostDol.Text = carCost + " $";
+            carCostRub.Text = AddPointerSpace((car.CarCost * dollar).ToString()) + " rub";
+            carCostDol.Text = AddPointerSpace(car.CarCost.ToString()) + " $";
 
-            auctioneerPaymentDol.Text = auctioneerPayment + " $";
-            auctioneerPaymentRub.Text = Convert.ToDouble(auctioneerPayment) * dollar + " rub";
+            auctioneerPaymentDol.Text = AddPointerSpace(auctioneerPayment) + " $";
+            auctioneerPaymentRub.Text = AddPointerSpace((Convert.ToDouble(auctioneerPayment) * dollar).ToString()) + " rub";
+
+            double pfl = 500;//pensioner
+
+            double roma = 0;
+            string temp = "";
+            string tmp1 = "";
+            string tmp2 = "";
+            double sbktsRf = 1234;//глонас
+
+            romaBelDol.Text = roma.ToString() + " $";
+            romaBelRub.Text = (roma * dollar).ToString() + " rub";
+            sbktsRfBelDol.Text = sbktsRf.ToString() + " $";
+            sbktsRfBelRub.Text = (sbktsRf * dollar).ToString() + " rub";
+            deliverCostRub.Text = AddPointerSpace( (deliver * dollar).ToString()) + " rub";
+            deliverCostDol.Text = AddPointerSpace(deliver.ToString()) + " $";
             {///Russian Customs Output
-                deliverCostRusRub.Text = deliver.ToString() + " $";
-                deliverCostRusDol.Text = (deliver * dollar).ToString() + " rub";
+                roma = 800;
 
-                string temp = customsPayment.Substring(0, customsPayment.IndexOf("|"));
+                temp = customsPayment.Substring(0, customsPayment.IndexOf("|"));
                 registrationCostRub.Text = temp + " rub";
-                registrationcostDol.Text = Convert.ToDouble(temp) / dollar + " $";
+                registrationcostDol.Text = Math.Round(Convert.ToDouble(temp) / dollar, 2) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("|") + 1);
 
                 temp = customsPayment.Substring(0, customsPayment.IndexOf("`"));
                 recyclingFeeRub.Text = temp + " rub";
-                recyclingFeeDol.Text = Convert.ToDouble(temp) / dollar + " $";
+                recyclingFeeDol.Text = Math.Round(Convert.ToDouble(temp) / dollar, 2) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("`") + 1);
 
                 temp = customsPayment.Substring(0, customsPayment.IndexOf("!"));
-                customDutiesRub.Text = temp + " rub";
-                customDutiesDol.Text = Convert.ToDouble(temp) / dollar + " $";
+                customDutiesRub.Text = AddPointerSpace(temp) + " rub";
+                customDutiesDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(temp) / dollar, 2).ToString()) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("!") + 1);
-
                 temp = customsPayment.Substring(0, customsPayment.Length);
-                RusResultRub.Text = Convert.ToDouble(temp)+(1000+Convert.ToDouble(auctioneerPayment)+carCost)*dollar + " rub";
-                RusResultol.Text = Convert.ToDouble(temp) / dollar + carCost + 1000 + Convert.ToDouble(auctioneerPayment) + " $";////||||||\\\\
+
+                label20.Text = (sbktsRf * dollar).ToString()+" rub";
+                label19.Text = sbktsRf.ToString()+" $";
+
+                label13.Text = (roma * dollar).ToString() + " rub";
+                label12.Text = roma.ToString() + " $";
+
+                tmp1 = (Convert.ToDouble(temp) + ( roma + sbktsRf + Convert.ToDouble(auctioneerPayment) + carCost + priceCorrection) * dollar).ToString();
+                tmp2 = Math.Round(Convert.ToDouble(temp) / dollar + carCost +   roma + sbktsRf +priceCorrection+ Convert.ToDouble(auctioneerPayment), 2).ToString();
+                RusResultRub.Text = AddPointerSpace(tmp1) + " rub";
+                RusResultol.Text = AddPointerSpace(tmp2) + " $";////||||||\\\\
+
+                FixedCarPriceRusRub.Text = AddPointerSpace((Convert.ToDouble(tmp1) + fixPrice * dollar).ToString()) + " rub";
+                FixedCarPriceRusDol.Text = AddPointerSpace((Convert.ToDouble(tmp2) + fixPrice).ToString()) + " $";
+
             }
             {///Belorussian Customs Output
-                double pfl = 500;//pensioner
-                double sbktsRf = 871;//??????????????????????????????????????????????
-                double roma = 1400;
+
                 double registrationCost = 50;
                 customsPayment = customsPaymentSave;
+                roma = 1400;
+                pfl = 500;//pensioner
 
-                deliverCostRub.Text = (deliver * dollar).ToString() + " rub"; 
-                deliverCostDol.Text = deliver.ToString() + " $";
-
+                fixPrice = Math.Round(fixPrice, 2);
                 registrationCostBelDol.Text = registrationCost.ToString() + " $";
                 registrationCostBelRub.Text = (registrationCost * dollar).ToString() + " rub";
 
@@ -730,47 +883,37 @@ namespace CarTravel
                 pflBelDol.Text = pfl.ToString() + " $";
                 pflBelRub.Text = (pfl * dollar).ToString() + " rub";
 
-                sbktsRfBelDol.Text = sbktsRf.ToString() + " $";
-                sbktsRfBelRub.Text = (sbktsRf * dollar).ToString() + " rub";
 
-                romaBelDol.Text = roma.ToString() + " $";
-                romaBelRub.Text = (roma * dollar).ToString() + " rub";
 
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("`") + 1);
                 customsPayment = customsPayment.Substring(0, customsPayment.IndexOf("!"));
-                customsPayment = (Convert.ToDouble(customsPayment)/2).ToString();
-                customsPaymentBelRub.Text = customsPayment + " rub";
-                customsPaymentBelDol.Text = (Convert.ToDouble(customsPayment) / dollar).ToString() + "  $";
+                customsPayment = (Convert.ToDouble(customsPayment) / 2).ToString();
+                customsPaymentBelRub.Text = AddPointerSpace(customsPayment) + " rub";
+                customsPaymentBelDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(customsPayment) / dollar).ToString()) + "  $";
+                romaBelRub.Text = (roma*dollar).ToString()+" rub";
+                romaBelDol.Text = roma.ToString()+" $";
 
-                ResultBelRub.Text = ((Convert.ToDouble(customsPayment)/dollar + pfl + sbktsRf + deliver + recyclingFee  + roma + registrationCost+Convert.ToDouble(auctioneerPayment)+carCost)*dollar).ToString()+" rub";
-                ResultBelDol.Text = (Convert.ToDouble(customsPayment)/dollar + pfl + sbktsRf+ deliver + recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment)+carCost).ToString()+" $";
+                tmp1 = ((Convert.ToDouble(customsPayment) / dollar + pfl +priceCorrection+ + sbktsRf +  recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost) * dollar).ToString();
+                tmp2 = Math.Round(Convert.ToDouble(customsPayment) / dollar + pfl + sbktsRf +priceCorrection + recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost, 2).ToString();
+                ResultBelRub.Text = AddPointerSpace(tmp1);
+                ResultBelDol.Text = AddPointerSpace(tmp2);
+
+                FixedCarPriceBelRub.Text = AddPointerSpace((Convert.ToDouble(tmp1)+fixPrice*dollar).ToString()) + " rub" ;
+                FixedCarPriceBelDol.Text = AddPointerSpace((Convert.ToDouble(tmp2) + fixPrice).ToString()) + " $"; 
+
+                ResultBelRub.Text+= " rub";
+                ResultBelDol.Text += " $";
             }
 
         }
-        private void CarTravel_Load(object sender, EventArgs e) { }
+        private void CarTravel_Load(object sender, EventArgs e)
+        {
+            releaseDatePicker.Value = DateTime.Now.AddYears(-4);
+            releaseDate = releaseDatePicker.Value;
+        }
         private void Result_Click(object sender, EventArgs e)
         {
         }
-
-        private void domainUpDown1_SelectedItemChanged(object sender, EventArgs e)
-        {
-            if (domainUpDown1.SelectedIndex==0)
-            {
-                label15.Text = 1000.ToString() + " $";
-                deliver = 1000;//??????????
-            }
-            else if (domainUpDown1.SelectedIndex==1)
-            {
-                label15.Text = 1175.ToString()+" $";
-                deliver = 1175+300+40+50+50;//deliver to clayped + deliver from cayped + port + lafet + declarant payment
-            }
-        }
-
-        private void label23_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void textBox4_Enter(object sender, EventArgs e)
         {
             euro = Convert.ToDouble(textBox4.Text);
@@ -779,5 +922,208 @@ namespace CarTravel
         {
             dollar = Convert.ToDouble(textBox5.Text);
         }
+
+        private void arrivalPortBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (arrivalPortBox.SelectedIndex == 0)
+            {
+                label15.Text = 2400.ToString() + " $";
+                deliver = 2400;//??????????
+            }
+            else if (arrivalPortBox.SelectedIndex == 1)
+            {
+                deliver = 1175 + 300 + 40 + 50 + 50;//deliver to clayped + deliver from cayped + port + lafet + declarant payment
+                label15.Text = deliver.ToString() + " $";
+            }
+        }
+
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            auctionName = "copart";
+        }
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            auctionName = "iaai";
+        }
+
+        private void releaseDatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            releaseDate = releaseDatePicker.Value;
+        }
+
+        private void textBox4_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                textBox5.Focus();
+            }
+        }
+
+        private void textBox5_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                releaseDatePicker.Focus();
+            }
+        }
+
+        private void releaseDatePicker_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                textBox3.Focus();
+            }
+        }
+        private void textBox3_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                arrivalPortBox.Focus();
+            }
+        }
+
+        private void arrivalPortBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                radioButton1.Focus();
+
+            }
+        }
+
+        private void radioButton1_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                CarPriceDollar.Focus();
+            }
+        }
+
+        private void radioButton2_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                CarPriceDollar.Focus();
+            }
+        }
+
+
+
+        private void FixPrice_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                PriceCorrection.Focus();
+            }
+        }
+
+        private void CarPriceDollar_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                FixPrice.Focus();
+            }
+        }
+
+        private void PriceCorrection_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                button1.Focus();
+            }
+        }
+
+        private void textBox4_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+
+        }
+
+        private void textBox5_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        private void releaseDatePicker_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        private void textBox3_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        private void arrivalPortBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        private void textBox2_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        private void CarPriceDollar_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+
+
+        private void FixPrice_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+       
+
+        private void textBox4_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Валидация "внутри" нажатия на OK
+
+        }
+
+        private void textBox4_Validated(object sender, EventArgs e)
+        {
+        }
+
+        
+
+
+        private void PriceCorrection_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = e.KeyChar == (char)Keys.Enter;
+            }
+        }
+
+        
     }
 }
