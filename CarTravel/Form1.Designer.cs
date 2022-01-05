@@ -77,8 +77,8 @@ namespace CarTravel
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.textBox4 = new System.Windows.Forms.TextBox();
-            this.textBox5 = new System.Windows.Forms.TextBox();
+            this.EuroBox = new System.Windows.Forms.TextBox();
+            this.UsdBox = new System.Windows.Forms.TextBox();
             this.label48 = new System.Windows.Forms.Label();
             this.label49 = new System.Windows.Forms.Label();
             this.carCostDol = new System.Windows.Forms.Label();
@@ -556,29 +556,29 @@ namespace CarTravel
             this.label3.TabIndex = 6;
             this.label3.Text = "Объём двигателя в cm^3";
             // 
-            // textBox4
+            // EuroBox
             // 
-            this.textBox4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.textBox4.Location = new System.Drawing.Point(12, 39);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(42, 23);
-            this.textBox4.TabIndex = 0;
-            this.textBox4.Text = "90";
-            this.textBox4.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox4_KeyPress);
-            this.textBox4.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox4_KeyUp);
-            this.textBox4.Validating += new System.ComponentModel.CancelEventHandler(this.textBox4_Validating);
-            this.textBox4.Validated += new System.EventHandler(this.textBox4_Validated);
+            this.EuroBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.EuroBox.Location = new System.Drawing.Point(12, 39);
+            this.EuroBox.Name = "EuroBox";
+            this.EuroBox.Size = new System.Drawing.Size(100, 23);
+            this.EuroBox.TabIndex = 0;
+            this.EuroBox.Text = "90";
+            this.EuroBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox4_KeyPress);
+            this.EuroBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox4_KeyUp);
+            this.EuroBox.Validating += new System.ComponentModel.CancelEventHandler(this.textBox4_Validating);
+            this.EuroBox.Validated += new System.EventHandler(this.textBox4_Validated);
             // 
-            // textBox5
+            // UsdBox
             // 
-            this.textBox5.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.textBox5.Location = new System.Drawing.Point(70, 39);
-            this.textBox5.Name = "textBox5";
-            this.textBox5.Size = new System.Drawing.Size(42, 23);
-            this.textBox5.TabIndex = 1;
-            this.textBox5.Text = "75";
-            this.textBox5.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox5_KeyPress);
-            this.textBox5.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox5_KeyUp);
+            this.UsdBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.UsdBox.Location = new System.Drawing.Point(139, 39);
+            this.UsdBox.Name = "UsdBox";
+            this.UsdBox.Size = new System.Drawing.Size(108, 23);
+            this.UsdBox.TabIndex = 1;
+            this.UsdBox.Text = "75";
+            this.UsdBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox5_KeyPress);
+            this.UsdBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox5_KeyUp);
             // 
             // label48
             // 
@@ -594,7 +594,7 @@ namespace CarTravel
             // 
             this.label49.AutoSize = true;
             this.label49.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.label49.Location = new System.Drawing.Point(67, 19);
+            this.label49.Location = new System.Drawing.Point(136, 19);
             this.label49.Name = "label49";
             this.label49.Size = new System.Drawing.Size(43, 17);
             this.label49.TabIndex = 62;
@@ -877,8 +877,8 @@ namespace CarTravel
             this.Controls.Add(this.label6);
             this.Controls.Add(this.label49);
             this.Controls.Add(this.label48);
-            this.Controls.Add(this.textBox5);
-            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.UsdBox);
+            this.Controls.Add(this.EuroBox);
             this.Controls.Add(this.deliverCostRub);
             this.Controls.Add(this.deliverCostDol);
             this.Controls.Add(this.label44);
@@ -983,8 +983,8 @@ namespace CarTravel
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.TextBox textBox5;
+        private System.Windows.Forms.TextBox EuroBox;
+        private System.Windows.Forms.TextBox UsdBox;
         private System.Windows.Forms.Label label48;
         private System.Windows.Forms.Label label49;
         private System.Windows.Forms.Label carCostDol;

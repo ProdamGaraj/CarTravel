@@ -1,6 +1,25 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Management.Sdk.Sfc;
+using System;
 using System.Linq;
+using System.Net.NetworkInformation;
+using System.Text;
 using System.Windows.Forms;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.NetworkInformation;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+
+using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
+
+using System.Xml;
 
 namespace CarTravel
 {
@@ -10,8 +29,8 @@ namespace CarTravel
         string auctionName = "copart";
         double fixPrice = 0;
         double carCost = 0;
-        double euro = 90;
-        double dollar = 75;
+        double euroValue = 90;
+        double usdValue = 75;
         double deliver = 0;
         double recyclingFee = 400;
         double pfl = 500;//pensioner
@@ -707,6 +726,92 @@ namespace CarTravel
             public CarTravel()
         {
             InitializeComponent();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            //Инициализируем объекта типа XmlTextReader и
+            //загружаем XML документ с сайта центрального банка
+            XmlTextReader reader = new XmlTextReader("http://www.cbr.ru/scripts/XML_daily.asp");
+            //В эти переменные будем сохранять куски XML
+            //с определенными валютами (Euro, USD)
+            string USDXml = "";
+            string EuroXML = "";
+            //Перебираем все узлы в загруженном документе
+            IPStatus status = IPStatus.Unknown;
+            try
+            {
+                status = new Ping().Send("8.8.8.8").Status;
+            }
+            catch { }
+       
+            if (status == IPStatus.Success)
+            {
+                MessageBox.Show("Соединение с сервером установлено.");
+
+                while (reader.Read())
+                {
+                    //Проверяем тип текущего узла
+                    switch (reader.NodeType)
+                    {
+                        //Если этого элемент Valute, то начинаем анализировать атрибуты
+                        case XmlNodeType.Element:
+
+                            if (reader.Name == "Valute")
+                            {
+                                if (reader.HasAttributes)
+                                {
+                                    //Метод передвигает указатель к следующему атрибуту
+                                    while (reader.MoveToNextAttribute())
+                                    {
+                                        if (reader.Name == "ID")
+                                        {
+                                            //Если значение атрибута равно R01235, то перед нами информация о курсе доллара
+                                            if (reader.Value == "R01235")
+                                            {
+                                                //Возвращаемся к элементу, содержащий текущий узел атрибута
+                                                reader.MoveToElement();
+                                                //Считываем содержимое дочерних узлом
+                                                USDXml = reader.ReadOuterXml();
+                                            }
+                                        }
+
+                                        //Аналогичную процедуру делаем для ЕВРО
+                                        if (reader.Name == "ID")
+                                        {
+                                            if (reader.Value == "R01239")
+                                            {
+                                                reader.MoveToElement();
+                                                EuroXML = reader.ReadOuterXml();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            break;
+                    }
+                }
+
+                //Из выдернутых кусков XML кода создаем новые XML документы
+                XmlDocument usdXmlDocument = new XmlDocument();
+                usdXmlDocument.LoadXml(USDXml);
+                XmlDocument euroXmlDocument = new XmlDocument();
+                euroXmlDocument.LoadXml(EuroXML);
+                //Метод возвращает узел, соответствующий выражению XPath
+                XmlNode xmlNode = usdXmlDocument.SelectSingleNode("Valute/Value");
+
+                //Считываем значение и конвертируем в decimal. Курс валют получен
+                usdValue = Convert.ToDouble(xmlNode.InnerText);
+                xmlNode = euroXmlDocument.SelectSingleNode("Valute/Value");
+                euroValue = Convert.ToDouble(xmlNode.InnerText);
+            }
+            else
+            {
+                MessageBox.Show("Ошибка соединения!");
+            }
+
+
+            
+            EuroBox.Text = euroValue.ToString();
+            UsdBox.Text = usdValue.ToString();
         }
 
 
@@ -716,28 +821,28 @@ namespace CarTravel
 
             bool flag = false;
 
-            if (FixPrice.Text=="" || textBox4.Text == "" || CarPriceDollar.Text == "" || textBox3.Text == "" || textBox5.Text == "")
+            if (FixPrice.Text=="" || EuroBox.Text == "" || CarPriceDollar.Text == "" || textBox3.Text == "" || UsdBox.Text == "")
             {
                 MessageBox.Show("Данные то введи.");
             }
             try
                 {
-                    euro = Convert.ToDouble(textBox4.Text);
+                    euroValue = Convert.ToDouble(EuroBox.Text);
                 }
                 catch (Exception)
                 {
-                    euro = 90;
-                    textBox4.Text = "90";
+                    euroValue = 90;
+                    EuroBox.Text = "90";
                     flag = true;
                 }
             try
                 {
-                    dollar = Convert.ToDouble(textBox5.Text);
+                    usdValue = Convert.ToDouble(UsdBox.Text);
                 }
                 catch (Exception)
                 {
-                    dollar = 75;
-                    textBox5.Text = "75";
+                    usdValue = 75;
+                    UsdBox.Text = "75";
                     flag = true;
                 }
             try
@@ -806,17 +911,17 @@ namespace CarTravel
             // end memes
 
             double age = (DateTime.Now.Date - releaseDate.Date).Days / 365;
-            Car car = new Car(age, engineCapacity, (carCost+deliver) * dollar / euro);
+            Car car = new Car(age, engineCapacity, (carCost+deliver));
 
             string auctioneerPayment = AuctionerPayment(car, auctionName);
-            string customsPayment = CustomsPayment(car, euro, dollar);
+            string customsPayment = CustomsPayment(car, euroValue, usdValue);
             string customsPaymentSave = customsPayment;
 
-            carCostRub.Text = AddPointerSpace((car.CarCost * dollar).ToString()) + " rub";
+            carCostRub.Text = AddPointerSpace(Math.Round(car.CarCost / usdValue, 2).ToString()) + " rub";
             carCostDol.Text = AddPointerSpace(car.CarCost.ToString()) + " $";
 
             auctioneerPaymentDol.Text = AddPointerSpace(auctioneerPayment) + " $";
-            auctioneerPaymentRub.Text = AddPointerSpace((Convert.ToDouble(auctioneerPayment) * dollar).ToString()) + " rub";
+            auctioneerPaymentRub.Text = AddPointerSpace((Convert.ToDouble(auctioneerPayment) * usdValue).ToString()) + " rub";
 
             double pfl = 500;//pensioner
 
@@ -827,42 +932,42 @@ namespace CarTravel
             double sbktsRf = 1234;//глонас
 
             romaBelDol.Text = roma.ToString() + " $";
-            romaBelRub.Text = (roma * dollar).ToString() + " rub";
+            romaBelRub.Text = (roma * usdValue).ToString() + " rub";
             sbktsRfBelDol.Text = sbktsRf.ToString() + " $";
-            sbktsRfBelRub.Text = (sbktsRf * dollar).ToString() + " rub";
-            deliverCostRub.Text = AddPointerSpace( (deliver * dollar).ToString()) + " rub";
+            sbktsRfBelRub.Text = (sbktsRf * usdValue).ToString() + " rub";
+            deliverCostRub.Text = AddPointerSpace( (deliver * usdValue).ToString()) + " rub";
             deliverCostDol.Text = AddPointerSpace(deliver.ToString()) + " $";
             {///Russian Customs Output
                 roma = 800;
 
                 temp = customsPayment.Substring(0, customsPayment.IndexOf("|"));
                 registrationCostRub.Text = temp + " rub";
-                registrationcostDol.Text = Math.Round(Convert.ToDouble(temp) / dollar, 2) + " $";
+                registrationcostDol.Text = Math.Round(Convert.ToDouble(temp) / usdValue, 2) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("|") + 1);
 
                 temp = customsPayment.Substring(0, customsPayment.IndexOf("`"));
                 recyclingFeeRub.Text = temp + " rub";
-                recyclingFeeDol.Text = Math.Round(Convert.ToDouble(temp) / dollar, 2) + " $";
+                recyclingFeeDol.Text = Math.Round(Convert.ToDouble(temp) / usdValue, 2) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("`") + 1);
 
                 temp = customsPayment.Substring(0, customsPayment.IndexOf("!"));
                 customDutiesRub.Text = AddPointerSpace(temp) + " rub";
-                customDutiesDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(temp) / dollar, 2).ToString()) + " $";
+                customDutiesDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(temp) / usdValue, 2).ToString()) + " $";
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("!") + 1);
                 temp = customsPayment.Substring(0, customsPayment.Length);
 
-                label20.Text = (sbktsRf * dollar).ToString()+" rub";
+                label20.Text = (sbktsRf * usdValue).ToString()+" rub";
                 label19.Text = sbktsRf.ToString()+" $";
 
-                label13.Text = (roma * dollar).ToString() + " rub";
+                label13.Text = (roma * usdValue).ToString() + " rub";
                 label12.Text = roma.ToString() + " $";
 
-                tmp1 = (Convert.ToDouble(temp) + ( roma + sbktsRf + Convert.ToDouble(auctioneerPayment) + carCost + priceCorrection) * dollar).ToString();
-                tmp2 = Math.Round(Convert.ToDouble(temp) / dollar + carCost +   roma + sbktsRf +priceCorrection+ Convert.ToDouble(auctioneerPayment), 2).ToString();
+                tmp1 = (Convert.ToDouble(temp) + ( roma + sbktsRf + Convert.ToDouble(auctioneerPayment) + carCost + priceCorrection) * usdValue).ToString();
+                tmp2 = Math.Round(Convert.ToDouble(temp) / usdValue + carCost +   roma + sbktsRf +priceCorrection+ Convert.ToDouble(auctioneerPayment), 2).ToString();
                 RusResultRub.Text = AddPointerSpace(tmp1) + " rub";
                 RusResultol.Text = AddPointerSpace(tmp2) + " $";////||||||\\\\
 
-                FixedCarPriceRusRub.Text = AddPointerSpace((Convert.ToDouble(tmp1) + fixPrice * dollar).ToString()) + " rub";
+                FixedCarPriceRusRub.Text = AddPointerSpace((Convert.ToDouble(tmp1) + fixPrice * usdValue).ToString()) + " rub";
                 FixedCarPriceRusDol.Text = AddPointerSpace((Convert.ToDouble(tmp2) + fixPrice).ToString()) + " $";
 
             }
@@ -875,13 +980,13 @@ namespace CarTravel
 
                 fixPrice = Math.Round(fixPrice, 2);
                 registrationCostBelDol.Text = registrationCost.ToString() + " $";
-                registrationCostBelRub.Text = (registrationCost * dollar).ToString() + " rub";
+                registrationCostBelRub.Text = (registrationCost * usdValue).ToString() + " rub";
 
-                recyclingFeeBelRub.Text = (recyclingFee * dollar).ToString() + " rub";
+                recyclingFeeBelRub.Text = (recyclingFee * usdValue).ToString() + " rub";
                 recyclingFeeBelDol.Text = recyclingFee.ToString() + " $";
 
                 pflBelDol.Text = pfl.ToString() + " $";
-                pflBelRub.Text = (pfl * dollar).ToString() + " rub";
+                pflBelRub.Text = (pfl * usdValue).ToString() + " rub";
 
 
 
@@ -889,16 +994,16 @@ namespace CarTravel
                 customsPayment = customsPayment.Substring(0, customsPayment.IndexOf("!"));
                 customsPayment = (Convert.ToDouble(customsPayment) / 2).ToString();
                 customsPaymentBelRub.Text = AddPointerSpace(customsPayment) + " rub";
-                customsPaymentBelDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(customsPayment) / dollar).ToString()) + "  $";
-                romaBelRub.Text = (roma*dollar).ToString()+" rub";
+                customsPaymentBelDol.Text = AddPointerSpace(Math.Round(Convert.ToDouble(customsPayment) / usdValue).ToString()) + "  $";
+                romaBelRub.Text = (roma*usdValue).ToString()+" rub";
                 romaBelDol.Text = roma.ToString()+" $";
 
-                tmp1 = ((Convert.ToDouble(customsPayment) / dollar + pfl +priceCorrection+ + sbktsRf +  recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost) * dollar).ToString();
-                tmp2 = Math.Round(Convert.ToDouble(customsPayment) / dollar + pfl + sbktsRf +priceCorrection + recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost, 2).ToString();
+                tmp1 = ((Convert.ToDouble(customsPayment) / usdValue + pfl +priceCorrection+ + sbktsRf +  recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost) * usdValue).ToString();
+                tmp2 = Math.Round(Convert.ToDouble(customsPayment) / usdValue + pfl + sbktsRf +priceCorrection + recyclingFee + roma + registrationCost + Convert.ToDouble(auctioneerPayment) + carCost, 2).ToString();
                 ResultBelRub.Text = AddPointerSpace(tmp1);
                 ResultBelDol.Text = AddPointerSpace(tmp2);
 
-                FixedCarPriceBelRub.Text = AddPointerSpace((Convert.ToDouble(tmp1)+fixPrice*dollar).ToString()) + " rub" ;
+                FixedCarPriceBelRub.Text = AddPointerSpace((Convert.ToDouble(tmp1)+fixPrice*usdValue).ToString()) + " rub" ;
                 FixedCarPriceBelDol.Text = AddPointerSpace((Convert.ToDouble(tmp2) + fixPrice).ToString()) + " $"; 
 
                 ResultBelRub.Text+= " rub";
@@ -916,11 +1021,11 @@ namespace CarTravel
         }
         private void textBox4_Enter(object sender, EventArgs e)
         {
-            euro = Convert.ToDouble(textBox4.Text);
+            euroValue = Convert.ToDouble(EuroBox.Text);
         }
         private void textBox5_Enter(object sender, EventArgs e)
         {
-            dollar = Convert.ToDouble(textBox5.Text);
+            usdValue = Convert.ToDouble(UsdBox.Text);
         }
 
         private void arrivalPortBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -956,7 +1061,7 @@ namespace CarTravel
         {
             if (e.KeyCode == Keys.Enter)
             {
-                textBox5.Focus();
+                UsdBox.Focus();
             }
         }
 
