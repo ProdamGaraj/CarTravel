@@ -334,7 +334,7 @@ namespace CarTravel
             customDuties *= euro;
             registrationCost *= euro;
 
-            return registrationCost.ToString() + "|" + recyclingFee.ToString() + "`" + customDuties.ToString() + "!" + (registrationCost + recyclingFee + customDuties).ToString();
+            return Math.Round(registrationCost).ToString() + "|" + Math.Round(recyclingFee).ToString() + "`" + Math.Round(customDuties).ToString() + "!" + Math.Round(registrationCost + recyclingFee + customDuties).ToString();
         }
         public String AuctionerPayment(Car car, string auctionName)
         {
@@ -892,7 +892,6 @@ namespace CarTravel
             {
                 priceCorrection = 0;
                 PriceCorrection.Text = "0";
-                flag = true;
             }
             if (flag)
             {
@@ -917,11 +916,11 @@ namespace CarTravel
             string customsPayment = CustomsPayment(car, euroValue, usdValue);
             string customsPaymentSave = customsPayment;
 
-            carCostRub.Text = AddPointerSpace(Math.Round(car.CarCost / usdValue, 2).ToString()) + " rub";
+            carCostRub.Text = AddPointerSpace(Math.Round(car.CarCost * usdValue).ToString()) + " rub";
             carCostDol.Text = AddPointerSpace(car.CarCost.ToString()) + " $";
 
             auctioneerPaymentDol.Text = AddPointerSpace(auctioneerPayment) + " $";
-            auctioneerPaymentRub.Text = AddPointerSpace((Convert.ToDouble(auctioneerPayment) * usdValue).ToString()) + " rub";
+            auctioneerPaymentRub.Text = AddPointerSpace(Math.Round(Convert.ToDouble(auctioneerPayment) * usdValue, 2).ToString()) + " rub";
 
             double pfl = 500;//pensioner
 
@@ -934,7 +933,7 @@ namespace CarTravel
             romaBelDol.Text = roma.ToString() + " $";
             romaBelRub.Text = (roma * usdValue).ToString() + " rub";
             sbktsRfBelDol.Text = sbktsRf.ToString() + " $";
-            sbktsRfBelRub.Text = (sbktsRf * usdValue).ToString() + " rub";
+            sbktsRfBelRub.Text = Math.Round(sbktsRf * usdValue, 2).ToString() + " rub";
             deliverCostRub.Text = AddPointerSpace( (deliver * usdValue).ToString()) + " rub";
             deliverCostDol.Text = AddPointerSpace(deliver.ToString()) + " $";
             {///Russian Customs Output
@@ -956,13 +955,13 @@ namespace CarTravel
                 customsPayment = customsPayment.Remove(0, customsPayment.IndexOf("!") + 1);
                 temp = customsPayment.Substring(0, customsPayment.Length);
 
-                label20.Text = (sbktsRf * usdValue).ToString()+" rub";
+                label20.Text = Math.Round(sbktsRf * usdValue, 2).ToString()+" rub";
                 label19.Text = sbktsRf.ToString()+" $";
 
-                label13.Text = (roma * usdValue).ToString() + " rub";
+                label13.Text = Math.Round(roma * usdValue, 2).ToString() + " rub";
                 label12.Text = roma.ToString() + " $";
 
-                tmp1 = (Convert.ToDouble(temp) + ( roma + sbktsRf + Convert.ToDouble(auctioneerPayment) + carCost + priceCorrection) * usdValue).ToString();
+                tmp1 = Math.Round(Convert.ToDouble(temp) + ( roma + sbktsRf + Convert.ToDouble(auctioneerPayment) + carCost + priceCorrection) * usdValue,2).ToString();
                 tmp2 = Math.Round(Convert.ToDouble(temp) / usdValue + carCost +   roma + sbktsRf +priceCorrection+ Convert.ToDouble(auctioneerPayment), 2).ToString();
                 RusResultRub.Text = AddPointerSpace(tmp1) + " rub";
                 RusResultol.Text = AddPointerSpace(tmp2) + " $";////||||||\\\\
